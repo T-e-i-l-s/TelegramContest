@@ -68,7 +68,7 @@ public class ShutterButton extends View {
 
     public ShutterButton(Context context) {
         super(context);
-        shadowDrawable = getResources().getDrawable(R.drawable.camera_btn);
+        shadowDrawable = getResources().getDrawable(R.drawable.camera_btn2);
         whitePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         whitePaint.setStyle(Paint.Style.FILL);
         whitePaint.setColor(0xffffffff);
@@ -121,32 +121,31 @@ public class ShutterButton extends View {
 
         shadowDrawable.setBounds(cx - AndroidUtilities.dp(36), cy - AndroidUtilities.dp(36), cx + AndroidUtilities.dp(36), cy + AndroidUtilities.dp(36));
         shadowDrawable.draw(canvas);
-        if (pressed || getScaleX() != 1.0f) {
-            float scale = (getScaleX() - 1.0f) / 0.06f;
-            whitePaint.setAlpha((int) (255 * scale));
-            canvas.drawCircle(cx, cy, AndroidUtilities.dp(26), whitePaint);
 
+        float scale = (getScaleX() - 1.0f) / 0.06f;
+
+        if (pressed || getScaleX() != 1.0f) {
             if (state == State.RECORDING) {
-                if (redProgress != 1.0f) {
-                    long dt = Math.abs(System.currentTimeMillis() - lastUpdateTime);
-                    if (dt > 17) {
-                        dt = 17;
-                    }
-                    totalTime += dt;
-                    if (totalTime > 120) {
-                        totalTime = 120;
-                    }
-                    redProgress = interpolator.getInterpolation(totalTime / 120.0f);
-                    invalidate();
+                shadowDrawable = getResources().getDrawable(R.drawable.camera_btn);
+                float size = AndroidUtilities.dp(10) * scale;
+                float left = cx - size;
+                float top = cy - size;
+                float right = cx + size;
+                float bottom = cy + size;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    canvas.drawRoundRect(left, top, right, bottom, AndroidUtilities.dp(6), AndroidUtilities.dp(6), redPaint);
                 }
-                canvas.drawCircle(cx, cy, AndroidUtilities.dp(26.5f) * scale * redProgress, redPaint);
-            } else if (redProgress != 0) {
-                canvas.drawCircle(cx, cy, AndroidUtilities.dp(26.5f) * scale, redPaint);
+            } else {
+                shadowDrawable = getResources().getDrawable(R.drawable.camera_btn2);
             }
-        } else if (redProgress != 0) {
-            redProgress = 0;
+        } else {
+            shadowDrawable = getResources().getDrawable(R.drawable.camera_btn2);
         }
+        shadowDrawable.draw(canvas);
+        invalidate();
     }
+
+
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -197,15 +196,7 @@ public class ShutterButton extends View {
             if (animated) {
                 lastUpdateTime = System.currentTimeMillis();
                 totalTime = 0;
-                if (state != State.RECORDING) {
-                    redProgress = 0.0f;
-                }
-            } else {
-                if (state == State.RECORDING) {
-                    redProgress = 1.0f;
-                } else {
-                    redProgress = 0.0f;
-                }
+                redProgress = 0.0f;
             }
             invalidate();
         }
