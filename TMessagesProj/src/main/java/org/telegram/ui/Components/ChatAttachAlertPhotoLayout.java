@@ -1321,26 +1321,28 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         shutterButton.setContentDescription(LocaleController.getString(R.string.AccDescrShutter));
 
         switchCameraButton = new ImageView(context);
+
+        switchCameraButton.setImageResource(R.drawable.retry_icon);
         switchCameraButton.setScaleType(ImageView.ScaleType.CENTER);
+        switchCameraButton.setBackgroundResource(R.drawable.round_background);
+        switchCameraButton.setPadding(12, 12, 12, 12);
+
         cameraPanel.addView(switchCameraButton, LayoutHelper.createFrame(48, 48, Gravity.RIGHT | Gravity.CENTER_VERTICAL));
+
         switchCameraButton.setOnClickListener(v -> {
             if (takingPhoto || cameraView == null || !cameraView.isInited()) {
                 return;
             }
             canSaveCameraPreview = false;
             cameraView.switchCamera();
-            ObjectAnimator animator = ObjectAnimator.ofFloat(switchCameraButton, View.SCALE_X, 0.0f).setDuration(100);
-            animator.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animator) {
-                    switchCameraButton.setImageResource(cameraView != null && cameraView.isFrontface() ? R.drawable.camera_revert1 : R.drawable.camera_revert2);
-                    ObjectAnimator.ofFloat(switchCameraButton, View.SCALE_X, 1.0f).setDuration(100).start();
-                }
-            });
-            animator.start();
 
+            ObjectAnimator rotateAnimator = ObjectAnimator.ofFloat(switchCameraButton, View.ROTATION, 0f, 180f);
+            rotateAnimator.setDuration(300);
+            rotateAnimator.start();
         });
+
         switchCameraButton.setContentDescription(LocaleController.getString(R.string.AccDescrSwitchCamera));
+
 
         for (int a = 0; a < 2; a++) {
             flashModeButton[a] = new ImageView(context);
@@ -2510,7 +2512,6 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                             flashModeButton[a].setTranslationY(0.0f);
                         }
                     }
-                    switchCameraButton.setImageResource(cameraView.isFrontface() ? R.drawable.camera_revert1 : R.drawable.camera_revert2);
                     switchCameraButton.setVisibility(cameraView.hasFrontFaceCamera() ? View.VISIBLE : View.INVISIBLE);
                     if (!cameraOpened) {
                         cameraInitAnimation = new AnimatorSet();
