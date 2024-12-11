@@ -27,11 +27,13 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Outline;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.hardware.Camera;
 import android.media.MediaMetadataRetriever;
@@ -55,9 +57,12 @@ import android.view.ViewOutlineProvider;
 import android.view.ViewPropertyAnimator;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Keep;
@@ -117,6 +122,12 @@ import java.util.List;
 import java.util.Map;
 
 public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayout implements NotificationCenter.NotificationCenterDelegate {
+    private enum State {
+        PHOTO,
+        VIDEO
+    }
+
+    private static State cameraMode = State.PHOTO;
 
     private static final int VIEW_TYPE_AVATAR_CONSTRUCTOR = 4;
     private static final int SHOW_FAST_SCROLL_MIN_COUNT = 30;
@@ -177,7 +188,10 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
     private Boolean isCameraFrontfaceBeforeEnteringEditMode = null;
     private TextView counterTextView;
     private TextView tooltipTextView;
+    private LinearLayout modeSelectorView;
     private ImageView switchCameraButton;
+    private TextView photoModeButton;
+    private TextView videoModeButton;
     private boolean takingPhoto;
     private static boolean mediaFromExternalCamera;
     private static ArrayList<Object> cameraPhotos = new ArrayList<>();
@@ -1115,19 +1129,51 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                     cy3 = cy2 = getMeasuredHeight() / 2 - dp(13);
                 }
 
-                int y = getMeasuredHeight() - tooltipTextView.getMeasuredHeight() - dp(12);
-                if (getMeasuredWidth() == dp(126)) {
-                    tooltipTextView.layout(cx - tooltipTextView.getMeasuredWidth() / 2, getMeasuredHeight(), cx + tooltipTextView.getMeasuredWidth() / 2, getMeasuredHeight() + tooltipTextView.getMeasuredHeight());
-                } else {
-                    tooltipTextView.layout(cx - tooltipTextView.getMeasuredWidth() / 2, y, cx + tooltipTextView.getMeasuredWidth() / 2, y + tooltipTextView.getMeasuredHeight());
-                }
-                shutterButton.layout(cx - shutterButton.getMeasuredWidth() / 2, cy - shutterButton.getMeasuredHeight() / 2, cx + shutterButton.getMeasuredWidth() / 2, cy + shutterButton.getMeasuredHeight() / 2);
-                switchCameraButton.layout(cx2 - switchCameraButton.getMeasuredWidth() / 2, cy2 - switchCameraButton.getMeasuredHeight() / 2, cx2 + switchCameraButton.getMeasuredWidth() / 2, cy2 + switchCameraButton.getMeasuredHeight() / 2);
+                shutterButton.layout(
+                        cx - shutterButton.getMeasuredWidth() / 2,
+                        cy - shutterButton.getMeasuredHeight() / 2,
+                        cx + shutterButton.getMeasuredWidth() / 2,
+                        cy + shutterButton.getMeasuredHeight() / 2
+                );
+
+                switchCameraButton.layout(
+                        cx2 - switchCameraButton.getMeasuredWidth() / 2,
+                        cy2 - switchCameraButton.getMeasuredHeight() / 2,
+                        cx2 + switchCameraButton.getMeasuredWidth() / 2,
+                        cy2 + switchCameraButton.getMeasuredHeight() / 2
+                );
+
                 for (int a = 0; a < 2; a++) {
-                    flashModeButton[a].layout(cx3 - flashModeButton[a].getMeasuredWidth() / 2, cy3 - flashModeButton[a].getMeasuredHeight() / 2, cx3 + flashModeButton[a].getMeasuredWidth() / 2, cy3 + flashModeButton[a].getMeasuredHeight() / 2);
+                    flashModeButton[a].layout(
+                            cx3 - flashModeButton[a].getMeasuredWidth() / 2,
+                            cy3 - flashModeButton[a].getMeasuredHeight() / 2,
+                            cx3 + flashModeButton[a].getMeasuredWidth() / 2,
+                            cy3 + flashModeButton[a].getMeasuredHeight() / 2
+                    );
                 }
+
+                int modeSelectorY = cy + shutterButton.getMeasuredHeight() / 2 + dp(12) - dp(20);
+                modeSelectorView.layout(
+                        cx - modeSelectorView.getMeasuredWidth() / 2,
+                        modeSelectorY,
+                        cx + modeSelectorView.getMeasuredWidth() / 2,
+                        modeSelectorY + modeSelectorView.getMeasuredHeight()
+                );
+            }
+
+            @Override
+            protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+
+                measureChild(shutterButton, widthMeasureSpec, heightMeasureSpec);
+                measureChild(switchCameraButton, widthMeasureSpec, heightMeasureSpec);
+                for (int a = 0; a < 2; a++) {
+                    measureChild(flashModeButton[a], widthMeasureSpec, heightMeasureSpec);
+                }
+                measureChild(modeSelectorView, widthMeasureSpec, heightMeasureSpec); // Измеряем modeSelectorView
             }
         };
+
         cameraPanel.setVisibility(View.GONE);
         cameraPanel.setAlpha(0.0f);
         container.addView(cameraPanel, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 126, Gravity.LEFT | Gravity.BOTTOM));
@@ -1384,6 +1430,47 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
             flashModeButton[a].setContentDescription("flash mode " + a);
         }
 
+
+        modeSelectorView = new LinearLayout(context);
+        modeSelectorView.setOrientation(LinearLayout.HORIZONTAL);
+        modeSelectorView.setGravity(Gravity.CENTER);
+        modeSelectorView.setTranslationX(dp(40));
+
+//        View backgroundBlock = new View(context);
+//        backgroundBlock.setBackgroundResource(R.drawable.round_background);
+//        modeSelectorView.addView(backgroundBlock, LayoutHelper.createFrame(90, 70, Gravity.CENTER));
+
+        photoModeButton = new TextView(context);
+        photoModeButton.setText("Photo");
+        photoModeButton.setOnClickListener(v -> {
+            cameraMode = State.PHOTO;
+            animateModeSelector();
+        });
+        photoModeButton.setTextSize(14);
+        photoModeButton.setTextColor(Color.WHITE);
+        photoModeButton.setGravity(Gravity.CENTER);
+        photoModeButton.setTypeface(photoModeButton.getTypeface(), Typeface.BOLD);
+        modeSelectorView.addView(photoModeButton, LayoutHelper.createFrame(70, 50, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0, 0, 0));
+
+        videoModeButton = new TextView(context);
+        videoModeButton.setText("Video");
+        videoModeButton.setOnClickListener(v -> {
+            cameraMode = State.VIDEO;
+            animateModeSelector();
+        });
+        videoModeButton.setTextSize(14);
+        videoModeButton.setTextColor(Color.WHITE);
+        videoModeButton.setGravity(Gravity.CENTER);
+        videoModeButton.setTypeface(videoModeButton.getTypeface(), Typeface.BOLD);
+        modeSelectorView.addView(videoModeButton, LayoutHelper.createFrame(70, 50, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0, 0, 0));
+
+        cameraPanel.addView(modeSelectorView, LayoutHelper.createFrame(
+                LayoutHelper.WRAP_CONTENT,
+                LayoutHelper.WRAP_CONTENT,
+                Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM,
+                0, 0, 0, 16
+        ));
+
         tooltipTextView = new TextView(context);
         tooltipTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         tooltipTextView.setTextColor(0xffffffff);
@@ -1425,6 +1512,26 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
             }
         });
     }
+
+    private static int position = 1;
+    public void animateModeSelector() {
+        if ((cameraMode == State.PHOTO && position == 1) || cameraMode == State.VIDEO && position == -1) {
+            return;
+        }
+
+        int offset = dp(80);
+        position = 1;
+        if (cameraMode == State.VIDEO) {
+            offset = -offset;
+            position = -1;
+        }
+
+        ObjectAnimator animator = ObjectAnimator.ofFloat(modeSelectorView, "translationX", modeSelectorView.getTranslationX(), modeSelectorView.getTranslationX() + offset);
+        animator.setDuration(80);
+        animator.setInterpolator(new AccelerateDecelerateInterpolator());
+        animator.start();
+    }
+
 
     public void showAvatarConstructorFragment(AvatarConstructorPreviewCell view, TLRPC.VideoSize emojiMarkupStrat) {
         AvatarConstructorFragment avatarConstructorFragment = new AvatarConstructorFragment(parentAlert.parentImageUpdater, parentAlert.getAvatarFor());
