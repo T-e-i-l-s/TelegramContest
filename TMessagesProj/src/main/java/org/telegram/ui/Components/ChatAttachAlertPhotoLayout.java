@@ -44,7 +44,6 @@ import android.provider.Settings;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.Pair;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -59,7 +58,6 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -115,19 +113,18 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayout implements NotificationCenter.NotificationCenterDelegate {
-    private enum State {
+    public enum Mode {
         PHOTO,
         VIDEO
     }
 
-    private static State cameraMode = State.PHOTO;
+    private static Mode cameraMode = Mode.PHOTO;
 
     private static final int VIEW_TYPE_AVATAR_CONSTRUCTOR = 4;
     private static final int SHOW_FAST_SCROLL_MIN_COUNT = 30;
@@ -1443,7 +1440,8 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         photoModeButton = new TextView(context);
         photoModeButton.setText("Photo");
         photoModeButton.setOnClickListener(v -> {
-            cameraMode = State.PHOTO;
+            cameraMode = Mode.PHOTO;
+            shutterButton.cameraMode = Mode.PHOTO;
             animateModeSelector();
         });
         photoModeButton.setTextSize(14);
@@ -1455,7 +1453,8 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         videoModeButton = new TextView(context);
         videoModeButton.setText("Video");
         videoModeButton.setOnClickListener(v -> {
-            cameraMode = State.VIDEO;
+            cameraMode = Mode.VIDEO;
+            shutterButton.cameraMode = Mode.VIDEO;
             animateModeSelector();
         });
         videoModeButton.setTextSize(14);
@@ -1515,13 +1514,13 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
 
     private static int position = 1;
     public void animateModeSelector() {
-        if ((cameraMode == State.PHOTO && position == 1) || cameraMode == State.VIDEO && position == -1) {
+        if ((cameraMode == Mode.PHOTO && position == 1) || cameraMode == Mode.VIDEO && position == -1) {
             return;
         }
 
         int offset = dp(80);
         position = 1;
-        if (cameraMode == State.VIDEO) {
+        if (cameraMode == Mode.VIDEO) {
             offset = -offset;
             position = -1;
         }

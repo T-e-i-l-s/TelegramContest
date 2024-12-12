@@ -12,6 +12,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -37,6 +38,8 @@ public class ShutterButton extends View {
     private final static int LONG_PRESS_TIME = 800;
 
     private Drawable shadowDrawable;
+
+    public ChatAttachAlertPhotoLayout.Mode cameraMode = ChatAttachAlertPhotoLayout.Mode.PHOTO;
 
     private DecelerateInterpolator interpolator = new DecelerateInterpolator();
     private Paint whitePaint;
@@ -133,13 +136,22 @@ public class ShutterButton extends View {
                 float right = cx + size;
                 float bottom = cy + size;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    redPaint.setColor(Color.parseColor("#F73131"));
                     canvas.drawRoundRect(left, top, right, bottom, AndroidUtilities.dp(6), AndroidUtilities.dp(6), redPaint);
                 }
             } else {
-                shadowDrawable = getResources().getDrawable(R.drawable.camera_btn2);
+                if (cameraMode == ChatAttachAlertPhotoLayout.Mode.PHOTO) {
+                    shadowDrawable = getResources().getDrawable(R.drawable.camera_btn2);
+                } else {
+                    shadowDrawable = getResources().getDrawable(R.drawable.camera_btn3);
+                }
             }
         } else {
-            shadowDrawable = getResources().getDrawable(R.drawable.camera_btn2);
+            if (cameraMode == ChatAttachAlertPhotoLayout.Mode.PHOTO) {
+                shadowDrawable = getResources().getDrawable(R.drawable.camera_btn2);
+            } else {
+                shadowDrawable = getResources().getDrawable(R.drawable.camera_btn3);
+            }
         }
         shadowDrawable.draw(canvas);
         invalidate();
@@ -158,37 +170,63 @@ public class ShutterButton extends View {
         float y = motionEvent.getY();
         switch (motionEvent.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                AndroidUtilities.runOnUIThread(longPressed, LONG_PRESS_TIME);
-                pressed = true;
-                processRelease = true;
-                setHighlighted(true);
+                if (cameraMode == ChatAttachAlertPhotoLayout.Mode.VIDEO) {
+                    if (state == State.DEFAULT) {
+                        // Начало записи
+                        if (delegate != null) {
+                            delegate.shutterLongPressed();
+                        }
+                        setState(State.RECORDING, true);
+                    } else if (state == State.RECORDING) {
+                        // Завершение записи
+                        setHighlighted(false);
+                        if (delegate != null) {
+                            delegate.shutterReleased();
+                        }
+                        setState(State.DEFAULT, true);
+                    }
+                } else {
+                    AndroidUtilities.runOnUIThread(longPressed, LONG_PRESS_TIME);
+                    pressed = true;
+                    processRelease = true;
+                    setHighlighted(true);
+                }
                 break;
             case MotionEvent.ACTION_UP:
-                setHighlighted(false);
-                AndroidUtilities.cancelRunOnUIThread(longPressed);
-                if (processRelease) {
-                    delegate.shutterReleased();
+                if (cameraMode == ChatAttachAlertPhotoLayout.Mode.PHOTO) {
+                    setHighlighted(false);
+                    AndroidUtilities.cancelRunOnUIThread(longPressed);
+                    if (processRelease && delegate != null) {
+                        delegate.shutterReleased();
+                    }
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
-                float dx = x >= 0 && x <= getMeasuredWidth() ? 0 : x;
-                float dy = y >= 0 && y <= getMeasuredHeight() ? 0 : y;
-                if (delegate.onTranslationChanged(dx, dy)) {
-                    AndroidUtilities.cancelRunOnUIThread(longPressed);
-                    if (state == State.RECORDING) {
-                        processRelease = false;
-                        setHighlighted(false);
-                        delegate.shutterCancel();
-                        setState(State.DEFAULT, true);
+                if (cameraMode == ChatAttachAlertPhotoLayout.Mode.PHOTO) {
+                    float dx = x >= 0 && x <= getMeasuredWidth() ? 0 : x;
+                    float dy = y >= 0 && y <= getMeasuredHeight() ? 0 : y;
+                    if (delegate != null && delegate.onTranslationChanged(dx, dy)) {
+                        AndroidUtilities.cancelRunOnUIThread(longPressed);
+                        if (state == State.RECORDING) {
+                            processRelease = false;
+                            setHighlighted(false);
+                            delegate.shutterCancel();
+                            setState(State.DEFAULT, true);
+                        }
                     }
                 }
                 break;
             case MotionEvent.ACTION_CANCEL:
                 setHighlighted(false);
                 pressed = false;
+                if (cameraMode == ChatAttachAlertPhotoLayout.Mode.PHOTO) {
+                    AndroidUtilities.cancelRunOnUIThread(longPressed);
+                }
+                break;
         }
         return true;
     }
+
 
     public void setState(State value, boolean animated) {
         if (state != value) {
