@@ -61,6 +61,7 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Keep;
@@ -185,6 +186,7 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
     private Boolean isCameraFrontfaceBeforeEnteringEditMode = null;
     private TextView counterTextView;
     private TextView tooltipTextView;
+    private RelativeLayout modeSelectorContainer;
     private LinearLayout modeSelectorView;
     private ImageView switchCameraButton;
     private TextView photoModeButton;
@@ -1150,10 +1152,10 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                 }
 
                 int modeSelectorY = cy + shutterButton.getMeasuredHeight() / 2 + dp(12) - dp(20);
-                modeSelectorView.layout(
-                        cx - modeSelectorView.getMeasuredWidth() / 2,
+                modeSelectorContainer.layout(
+                        cx - modeSelectorContainer.getMeasuredWidth() / 2,
                         modeSelectorY,
-                        cx + modeSelectorView.getMeasuredWidth() / 2,
+                        cx + modeSelectorContainer.getMeasuredWidth() / 2,
                         modeSelectorY + modeSelectorView.getMeasuredHeight()
                 );
             }
@@ -1167,7 +1169,7 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                 for (int a = 0; a < 2; a++) {
                     measureChild(flashModeButton[a], widthMeasureSpec, heightMeasureSpec);
                 }
-                measureChild(modeSelectorView, widthMeasureSpec, heightMeasureSpec); // Измеряем modeSelectorView
+                measureChild(modeSelectorContainer, widthMeasureSpec, heightMeasureSpec); // Измеряем modeSelectorView
             }
         };
 
@@ -1428,14 +1430,20 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         }
 
 
+        modeSelectorContainer = new RelativeLayout(context);
+
+        View backgroundBlock = new View(context);
+        backgroundBlock.setBackgroundResource(R.drawable.round_background);
+        RelativeLayout.LayoutParams backgroundParams = new RelativeLayout.LayoutParams(dp(70), dp(30));
+        backgroundParams.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
+        backgroundBlock.setLayoutParams(backgroundParams);
+        modeSelectorContainer.addView(backgroundBlock);
+
         modeSelectorView = new LinearLayout(context);
         modeSelectorView.setOrientation(LinearLayout.HORIZONTAL);
         modeSelectorView.setGravity(Gravity.CENTER);
-        modeSelectorView.setTranslationX(dp(40));
+        modeSelectorView.setTranslationX(dp(35));
 
-//        View backgroundBlock = new View(context);
-//        backgroundBlock.setBackgroundResource(R.drawable.round_background);
-//        modeSelectorView.addView(backgroundBlock, LayoutHelper.createFrame(90, 70, Gravity.CENTER));
 
         photoModeButton = new TextView(context);
         photoModeButton.setText("Photo");
@@ -1448,7 +1456,7 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         photoModeButton.setTextColor(Color.WHITE);
         photoModeButton.setGravity(Gravity.CENTER);
         photoModeButton.setTypeface(photoModeButton.getTypeface(), Typeface.BOLD);
-        modeSelectorView.addView(photoModeButton, LayoutHelper.createFrame(70, 50, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0, 0, 0));
+        modeSelectorView.addView(photoModeButton, LayoutHelper.createFrame(70, 50, Gravity.CENTER, 0, 0, 0, 0));
 
         videoModeButton = new TextView(context);
         videoModeButton.setText("Video");
@@ -1461,10 +1469,15 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         videoModeButton.setTextColor(Color.WHITE);
         videoModeButton.setGravity(Gravity.CENTER);
         videoModeButton.setTypeface(videoModeButton.getTypeface(), Typeface.BOLD);
-        modeSelectorView.addView(videoModeButton, LayoutHelper.createFrame(70, 50, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM, 0, 0, 0, 0));
+        modeSelectorView.addView(videoModeButton, LayoutHelper.createFrame(70, 50, Gravity.CENTER, 0, 0, 0, 0));
 
-        cameraPanel.addView(modeSelectorView, LayoutHelper.createFrame(
+        modeSelectorContainer.addView(modeSelectorView, LayoutHelper.createFrame(
+                210,
                 LayoutHelper.WRAP_CONTENT,
+                Gravity.CENTER
+        ));
+        cameraPanel.addView(modeSelectorContainer, LayoutHelper.createFrame(
+                210,
                 LayoutHelper.WRAP_CONTENT,
                 Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM,
                 0, 0, 0, 16
@@ -1518,7 +1531,7 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
             return;
         }
 
-        int offset = dp(80);
+        int offset = dp(70);
         position = 1;
         if (cameraMode == Mode.VIDEO) {
             offset = -offset;

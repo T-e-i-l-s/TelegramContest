@@ -127,7 +127,8 @@ public class ShutterButton extends View {
 
         float scale = (getScaleX() - 1.0f) / 0.06f;
 
-        if (pressed || getScaleX() != 1.0f) {
+        System.out.println(pressed + " " + state + " " + cameraMode);
+        if (pressed || getScaleX() != 1.0f || cameraMode == ChatAttachAlertPhotoLayout.Mode.VIDEO) {
             if (state == State.RECORDING) {
                 shadowDrawable = getResources().getDrawable(R.drawable.camera_btn);
                 float size = AndroidUtilities.dp(10) * scale;
@@ -172,7 +173,10 @@ public class ShutterButton extends View {
             case MotionEvent.ACTION_DOWN:
                 if (cameraMode == ChatAttachAlertPhotoLayout.Mode.VIDEO) {
                     if (state == State.DEFAULT) {
-                        // Начало записи
+                        pressed = true;
+                        processRelease = true;
+                        AndroidUtilities.runOnUIThread(longPressed, LONG_PRESS_TIME);
+                        setHighlighted(true);
                         if (delegate != null) {
                             delegate.shutterLongPressed();
                         }
