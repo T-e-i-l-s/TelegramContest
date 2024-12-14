@@ -127,7 +127,6 @@ public class ShutterButton extends View {
 
         float scale = (getScaleX() - 1.0f) / 0.06f;
 
-        System.out.println(pressed + " " + state + " " + cameraMode);
         if (pressed || getScaleX() != 1.0f || cameraMode == ChatAttachAlertPhotoLayout.Mode.VIDEO) {
             if (state == State.RECORDING) {
                 shadowDrawable = getResources().getDrawable(R.drawable.camera_btn);

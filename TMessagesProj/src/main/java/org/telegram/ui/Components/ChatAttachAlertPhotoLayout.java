@@ -108,6 +108,7 @@ import org.telegram.ui.LaunchActivity;
 import org.telegram.ui.PhotoViewer;
 import org.telegram.ui.Stars.StarsIntroActivity;
 import org.telegram.ui.Stories.recorder.AlbumButton;
+import org.telegram.ui.Stories.recorder.PhotoVideoSwitcherView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -186,11 +187,8 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
     private Boolean isCameraFrontfaceBeforeEnteringEditMode = null;
     private TextView counterTextView;
     private TextView tooltipTextView;
-    private RelativeLayout modeSelectorContainer;
-    private LinearLayout modeSelectorView;
     private ImageView switchCameraButton;
-    private TextView photoModeButton;
-    private TextView videoModeButton;
+    private PhotoVideoSwitcherView modeSwitcherView;
     private boolean takingPhoto;
     private static boolean mediaFromExternalCamera;
     private static ArrayList<Object> cameraPhotos = new ArrayList<>();
@@ -1151,12 +1149,12 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                     );
                 }
 
-                int modeSelectorY = cy + shutterButton.getMeasuredHeight() / 2 + dp(12) - dp(20);
-                modeSelectorContainer.layout(
-                        cx - modeSelectorContainer.getMeasuredWidth() / 2,
+                int modeSelectorY = cy + shutterButton.getMeasuredHeight() / 2 - dp(40);
+                modeSwitcherView.layout(
+                        cx - modeSwitcherView.getMeasuredWidth() / 2,
                         modeSelectorY,
-                        cx + modeSelectorContainer.getMeasuredWidth() / 2,
-                        modeSelectorY + modeSelectorView.getMeasuredHeight()
+                        cx + modeSwitcherView.getMeasuredWidth() / 2,
+                        modeSelectorY + modeSwitcherView.getMeasuredHeight()
                 );
             }
 
@@ -1169,7 +1167,6 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                 for (int a = 0; a < 2; a++) {
                     measureChild(flashModeButton[a], widthMeasureSpec, heightMeasureSpec);
                 }
-                measureChild(modeSelectorContainer, widthMeasureSpec, heightMeasureSpec); // Измеряем modeSelectorView
             }
         };
 
@@ -1430,58 +1427,18 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         }
 
 
-        modeSelectorContainer = new RelativeLayout(context);
-
-        View backgroundBlock = new View(context);
-        backgroundBlock.setBackgroundResource(R.drawable.round_background);
-        RelativeLayout.LayoutParams backgroundParams = new RelativeLayout.LayoutParams(dp(70), dp(30));
-        backgroundParams.addRule(RelativeLayout.CENTER_IN_PARENT, RelativeLayout.TRUE);
-        backgroundBlock.setLayoutParams(backgroundParams);
-        modeSelectorContainer.addView(backgroundBlock);
-
-        modeSelectorView = new LinearLayout(context);
-        modeSelectorView.setOrientation(LinearLayout.HORIZONTAL);
-        modeSelectorView.setGravity(Gravity.CENTER);
-        modeSelectorView.setTranslationX(dp(35));
-
-
-        photoModeButton = new TextView(context);
-        photoModeButton.setText("Photo");
-        photoModeButton.setOnClickListener(v -> {
-            cameraMode = Mode.PHOTO;
-            shutterButton.cameraMode = Mode.PHOTO;
-            animateModeSelector();
+        modeSwitcherView = new PhotoVideoSwitcherView(context);
+        modeSwitcherView.setOnSwitchModeListener(newIsVideo -> {
+            if (newIsVideo) {
+                shutterButton.cameraMode = Mode.VIDEO;
+                cameraMode = Mode.VIDEO;
+            } else{
+                shutterButton.cameraMode = Mode.PHOTO;
+                cameraMode = Mode.PHOTO;
+            }
+            modeSwitcherView.switchMode(cameraMode == Mode.VIDEO);
         });
-        photoModeButton.setTextSize(14);
-        photoModeButton.setTextColor(Color.WHITE);
-        photoModeButton.setGravity(Gravity.CENTER);
-        photoModeButton.setTypeface(photoModeButton.getTypeface(), Typeface.BOLD);
-        modeSelectorView.addView(photoModeButton, LayoutHelper.createFrame(70, 50, Gravity.CENTER, 0, 0, 0, 0));
-
-        videoModeButton = new TextView(context);
-        videoModeButton.setText("Video");
-        videoModeButton.setOnClickListener(v -> {
-            cameraMode = Mode.VIDEO;
-            shutterButton.cameraMode = Mode.VIDEO;
-            animateModeSelector();
-        });
-        videoModeButton.setTextSize(14);
-        videoModeButton.setTextColor(Color.WHITE);
-        videoModeButton.setGravity(Gravity.CENTER);
-        videoModeButton.setTypeface(videoModeButton.getTypeface(), Typeface.BOLD);
-        modeSelectorView.addView(videoModeButton, LayoutHelper.createFrame(70, 50, Gravity.CENTER, 0, 0, 0, 0));
-
-        modeSelectorContainer.addView(modeSelectorView, LayoutHelper.createFrame(
-                210,
-                LayoutHelper.WRAP_CONTENT,
-                Gravity.CENTER
-        ));
-        cameraPanel.addView(modeSelectorContainer, LayoutHelper.createFrame(
-                210,
-                LayoutHelper.WRAP_CONTENT,
-                Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM,
-                0, 0, 0, 16
-        ));
+        cameraPanel.addView(modeSwitcherView);
 
         tooltipTextView = new TextView(context);
         tooltipTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
@@ -1524,26 +1481,6 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
             }
         });
     }
-
-    private static int position = 1;
-    public void animateModeSelector() {
-        if ((cameraMode == Mode.PHOTO && position == 1) || cameraMode == Mode.VIDEO && position == -1) {
-            return;
-        }
-
-        int offset = dp(70);
-        position = 1;
-        if (cameraMode == Mode.VIDEO) {
-            offset = -offset;
-            position = -1;
-        }
-
-        ObjectAnimator animator = ObjectAnimator.ofFloat(modeSelectorView, "translationX", modeSelectorView.getTranslationX(), modeSelectorView.getTranslationX() + offset);
-        animator.setDuration(80);
-        animator.setInterpolator(new AccelerateDecelerateInterpolator());
-        animator.start();
-    }
-
 
     public void showAvatarConstructorFragment(AvatarConstructorPreviewCell view, TLRPC.VideoSize emojiMarkupStrat) {
         AvatarConstructorFragment avatarConstructorFragment = new AvatarConstructorFragment(parentAlert.parentImageUpdater, parentAlert.getAvatarFor());
