@@ -186,6 +186,7 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
     private Runnable zoomControlHideRunnable;
     private Runnable afterCameraInitRunnable;
     private Boolean isCameraFrontfaceBeforeEnteringEditMode = null;
+    private RelativeLayout cameraPanelBottomContainer;
     private TextView counterTextView;
     private TextView tooltipTextView;
     private PhotoVideoSwitcherView modeSwitcherView;
@@ -1118,12 +1119,12 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                         cy + recordControl.getMeasuredHeight() / 2
                 );
 
-                int modeSwitcherY = cy + recordControl.getMeasuredHeight() / 2 - dp(40);
-                modeSwitcherView.layout(
-                        cx - modeSwitcherView.getMeasuredWidth() / 2,
+                int modeSwitcherY = cy + cameraPanelBottomContainer.getMeasuredHeight() / 2 - dp(40);
+                cameraPanelBottomContainer.layout(
+                        cx - cameraPanelBottomContainer.getMeasuredWidth() / 2,
                         modeSwitcherY,
-                        cx + modeSwitcherView.getMeasuredWidth() / 2,
-                        modeSwitcherY + modeSwitcherView.getMeasuredHeight()
+                        cx + cameraPanelBottomContainer.getMeasuredWidth() / 2,
+                        modeSwitcherY + cameraPanelBottomContainer.getMeasuredHeight()
                 );
 
                 int cx3 = cx / 2 - dp(17);
@@ -1401,7 +1402,7 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
             @Override
             public void onCheckClick() { System.out.println("onCheckClick");}
         });
-
+        recordControl.setupAsChatCamera();
         recordControl.setVisibility(View.VISIBLE);
         recordControl.startAsVideo(videoEnabled);
         cameraPanel.addView(recordControl, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
@@ -1447,26 +1448,42 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
             flashModeButton[a].setContentDescription("flash mode " + a);
         }
 
+        cameraPanelBottomContainer = new RelativeLayout(context);
+
         modeSwitcherView = new PhotoVideoSwitcherView(context);
+        RelativeLayout.LayoutParams modeSwitcherParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+        );
+        modeSwitcherParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+        modeSwitcherView.setLayoutParams(modeSwitcherParams);
         modeSwitcherView.setOnSwitchModeListener(newIsVideo -> {
             if (newIsVideo) {
                 cameraMode = Mode.VIDEO;
                 recordControl.startAsVideo(true);
-            } else{
+            } else {
                 cameraMode = Mode.PHOTO;
                 recordControl.startAsVideo(false);
             }
             modeSwitcherView.switchMode(cameraMode == Mode.VIDEO);
         });
-        cameraPanel.addView(modeSwitcherView);
+        cameraPanelBottomContainer.addView(modeSwitcherView);
 
         tooltipTextView = new TextView(context);
+        RelativeLayout.LayoutParams tooltipParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT,
+                RelativeLayout.LayoutParams.WRAP_CONTENT
+        );
+        tooltipParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+        tooltipTextView.setLayoutParams(tooltipParams);
         tooltipTextView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
         tooltipTextView.setTextColor(0xffffffff);
         tooltipTextView.setText(LocaleController.getString(R.string.StoryHintPinchToZoom));
         tooltipTextView.setShadowLayer(dp(3.33333f), 0, dp(0.666f), 0x4c000000);
         tooltipTextView.setPadding(dp(6), 0, dp(6), 0);
-        cameraPanel.addView(tooltipTextView);
+        cameraPanelBottomContainer.addView(tooltipTextView);
+
+        cameraPanel.addView(cameraPanelBottomContainer);
 
         cameraPhotoRecyclerView = new RecyclerListView(context, resourcesProvider) {
             @Override
@@ -2372,11 +2389,7 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
             return;
         }
         cameraView.initTexture();
-        if (shouldLoadAllMedia()) {
-            tooltipTextView.setVisibility(VISIBLE);
-        } else {
-            tooltipTextView.setVisibility(GONE);
-        }
+        tooltipTextView.setVisibility(GONE);
         if (cameraPhotos.isEmpty()) {
             counterTextView.setVisibility(View.INVISIBLE);
             cameraPhotoRecyclerView.setVisibility(View.GONE);

@@ -69,6 +69,8 @@ public class RecordControl extends View implements FlashViews.Invertable {
         void onCheckClick();
     }
 
+
+
     public void startAsVideo(boolean isVideo) {
         overrideStartModeIsVideoT = -1;
         this.startModeIsVideo = isVideo;
@@ -77,6 +79,11 @@ public class RecordControl extends View implements FlashViews.Invertable {
 
     public void startAsVideoT(float isVideoT) {
         overrideStartModeIsVideoT = isVideoT;
+        invalidate();
+    }
+
+    public void setupAsChatCamera() {
+        this.isChatCamera = true;
         invalidate();
     }
 
@@ -280,6 +287,7 @@ public class RecordControl extends View implements FlashViews.Invertable {
     private final AnimatedFloat startModeIsVideoT = new AnimatedFloat(this, 0, 350, CubicBezierInterpolator.EASE_OUT_QUINT);
     private float overrideStartModeIsVideoT = -1;
     private boolean startModeIsVideo = true;
+    private boolean isChatCamera = false;
 
     private final AnimatedFloat recordingT = new AnimatedFloat(this, 0, 350, CubicBezierInterpolator.EASE_OUT_QUINT);
     private final AnimatedFloat recordingLongT = new AnimatedFloat(this, 0, 850, CubicBezierInterpolator.EASE_OUT_QUINT);
@@ -441,7 +449,7 @@ public class RecordControl extends View implements FlashViews.Invertable {
         outlineFilledPaint.setStrokeWidth(strokeWidth);
         outlineFilledPaint.setAlpha((int) (0xFF * Math.max(.7f * recordingLoading, 1f - recordEndT)));
 
-        if (recordingLoading <= 0) {
+        if (recordingLoading <= 0 || isChatCamera) {
             canvas.drawArc(AndroidUtilities.rectTmp, -90, sweepAngle, false, outlineFilledPaint);
         } else {
             final long now = SystemClock.elapsedRealtime();
@@ -463,23 +471,25 @@ public class RecordControl extends View implements FlashViews.Invertable {
         if (recording) {
             invalidate();
 
-            if (duration / 1000L != lastDuration / 1000L) {
-                delegate.onVideoDuration(duration / 1000L);
+            if (!isChatCamera) {
+                if (duration / 1000L != lastDuration / 1000L) {
+                    delegate.onVideoDuration(duration / 1000L);
+                }
+                if (duration >= MAX_DURATION) {
+                    post(() -> {
+                        recording = false;
+                        longpressRecording = false;
+                        this.recordingLoadingStart = SystemClock.elapsedRealtime();
+                        this.recordingLoading = true;
+                        touch = false;
+                        recordButton.setPressed(false);
+                        flipButton.setPressed(false);
+                        lockButton.setPressed(false);
+                        delegate.onVideoRecordEnd(true);
+                    });
+                }
+                lastDuration = duration;
             }
-            if (duration >= MAX_DURATION) {
-                post(() -> {
-                    recording = false;
-                    longpressRecording = false;
-                    this.recordingLoadingStart = SystemClock.elapsedRealtime();
-                    this.recordingLoading = true;
-                    touch = false;
-                    recordButton.setPressed(false);
-                    flipButton.setPressed(false);
-                    lockButton.setPressed(false);
-                    delegate.onVideoRecordEnd(true);
-                });
-            }
-            lastDuration = duration;
         }
 
         canvas.restore();
