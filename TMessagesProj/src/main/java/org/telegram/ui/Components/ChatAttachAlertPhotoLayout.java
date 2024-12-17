@@ -1127,14 +1127,13 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                         modeSwitcherY + cameraPanelBottomContainer.getMeasuredHeight()
                 );
 
-                int cx3 = cx / 2 - dp(17);
-                int cy3 = cy - dp(13);
+                int padding = dp(16);
                 for (int a = 0; a < 2; a++) {
                     flashModeButton[a].layout(
-                            cx3 - flashModeButton[a].getMeasuredWidth() / 2,
-                            cy3 - flashModeButton[a].getMeasuredHeight() / 2,
-                            cx3 + flashModeButton[a].getMeasuredWidth() / 2,
-                            cy3 + flashModeButton[a].getMeasuredHeight() / 2
+                            getMeasuredWidth() - flashModeButton[a].getMeasuredWidth() - padding,
+                            padding + a * (flashModeButton[a].getMeasuredHeight() + dp(8)),
+                            getMeasuredWidth() - padding,
+                            padding + a * (flashModeButton[a].getMeasuredHeight() + dp(8)) + flashModeButton[a].getMeasuredHeight()
                     );
                 }
             }
@@ -1154,7 +1153,9 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         cameraPanel.setVisibility(View.GONE);
         cameraPanel.setAlpha(0.0f);
         container.addView(cameraPanel, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.CENTER | Gravity.BOTTOM));
-
+        
+        cameraPanel.setClipChildren(false);
+        container.setClipChildren(false);
 
         counterTextView = new TextView(context);
         counterTextView.setBackgroundResource(R.drawable.photos_rounded);
