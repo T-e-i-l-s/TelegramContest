@@ -1407,11 +1407,10 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         recordControl.startAsVideo(videoEnabled);
         cameraPanel.addView(recordControl, LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.CENTER));
 
-
         for (int a = 0; a < 2; a++) {
             flashModeButton[a] = new ImageView(context);
             flashModeButton[a].setScaleType(ImageView.ScaleType.CENTER);
-            flashModeButton[a].setVisibility(View.INVISIBLE);
+            flashModeButton[a].setVisibility(View.VISIBLE);
             cameraPanel.addView(flashModeButton[a], LayoutHelper.createFrame(48, 48, Gravity.LEFT | Gravity.TOP));
             flashModeButton[a].setOnClickListener(currentImage -> {
                 if (flashAnimationInProgress || cameraView == null || !cameraView.isInited() || !cameraOpened) {
@@ -2588,7 +2587,7 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                     if (current == null || next == null) return;
                     if (current.equals(next)) {
                         for (int a = 0; a < 2; a++) {
-                            flashModeButton[a].setVisibility(View.INVISIBLE);
+                            flashModeButton[a].setVisibility(View.VISIBLE);
                             flashModeButton[a].setAlpha(0.0f);
                             flashModeButton[a].setTranslationY(0.0f);
                         }

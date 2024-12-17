@@ -449,23 +449,25 @@ public class RecordControl extends View implements FlashViews.Invertable {
         outlineFilledPaint.setStrokeWidth(strokeWidth);
         outlineFilledPaint.setAlpha((int) (0xFF * Math.max(.7f * recordingLoading, 1f - recordEndT)));
 
-        if (recordingLoading <= 0 || isChatCamera) {
-            canvas.drawArc(AndroidUtilities.rectTmp, -90, sweepAngle, false, outlineFilledPaint);
-        } else {
-            final long now = SystemClock.elapsedRealtime();
-            CircularProgressDrawable.getSegments((now - recordingLoadingStart) % 5400, loadingSegments);
-            invalidate();
-            float fromAngle = loadingSegments[0], toAngle = loadingSegments[1];
+        if (!isChatCamera) {
+            if (recordingLoading <= 0) {
+                canvas.drawArc(AndroidUtilities.rectTmp, -90, sweepAngle, false, outlineFilledPaint);
+            } else {
+                final long now = SystemClock.elapsedRealtime();
+                CircularProgressDrawable.getSegments((now - recordingLoadingStart) % 5400, loadingSegments);
+                invalidate();
+                float fromAngle = loadingSegments[0], toAngle = loadingSegments[1];
 
-            float center = (fromAngle + toAngle) / 2f;
-            float amplitude = Math.abs(toAngle - fromAngle) / 2f;
+                float center = (fromAngle + toAngle) / 2f;
+                float amplitude = Math.abs(toAngle - fromAngle) / 2f;
 
-            if (this.recordingLoading) {
-                center = lerp(-90 + sweepAngle / 2f, center, recordingLoading);
-                amplitude = lerp(sweepAngle / 2f, amplitude, recordingLoading);
+                if (this.recordingLoading) {
+                    center = lerp(-90 + sweepAngle / 2f, center, recordingLoading);
+                    amplitude = lerp(sweepAngle / 2f, amplitude, recordingLoading);
+                }
+
+                canvas.drawArc(AndroidUtilities.rectTmp, center - amplitude, amplitude * 2, false, outlineFilledPaint);
             }
-
-            canvas.drawArc(AndroidUtilities.rectTmp, center - amplitude, amplitude * 2, false, outlineFilledPaint);
         }
 
         if (recording) {
