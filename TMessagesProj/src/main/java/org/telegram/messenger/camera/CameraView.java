@@ -167,7 +167,9 @@ public class CameraView extends FrameLayout implements TextureView.SurfaceTextur
 
     public boolean startRecording(File path, Runnable onFinished) {
         cameraSessionRecording = cameraSession[0];
-        cameraThread.startRecording(path);
+        new Thread(() -> {
+            cameraThread.startRecording(path);
+        }).start();
         onRecordingFinishRunnable = onFinished;
         return true;
     }
@@ -408,6 +410,7 @@ public class CameraView extends FrameLayout implements TextureView.SurfaceTextur
         outerPaint.setStyle(Paint.Style.STROKE);
         outerPaint.setStrokeWidth(dp(2));
         innerPaint.setColor(0x7fffffff);
+
     }
 
     private boolean textureInited = false;

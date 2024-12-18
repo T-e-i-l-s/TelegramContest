@@ -1369,7 +1369,9 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
             }
 
             @Override
-            public void onGalleryClick() { System.out.println("gal click");}
+            public void onGalleryClick() {
+                parentAlert.dismiss();
+            }
 
             @Override
             public void onFlipClick() {
