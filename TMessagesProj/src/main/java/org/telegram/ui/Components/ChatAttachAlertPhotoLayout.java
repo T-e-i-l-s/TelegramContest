@@ -1126,16 +1126,6 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                         cx + cameraPanelBottomContainer.getMeasuredWidth() / 2,
                         modeSwitcherY + cameraPanelBottomContainer.getMeasuredHeight()
                 );
-
-                int padding = dp(16);
-                for (int a = 0; a < 2; a++) {
-                    flashModeButton[a].layout(
-                            getMeasuredWidth() - flashModeButton[a].getMeasuredWidth() - padding,
-                            padding + a * (flashModeButton[a].getMeasuredHeight() + dp(8)),
-                            getMeasuredWidth() - padding,
-                            padding + a * (flashModeButton[a].getMeasuredHeight() + dp(8)) + flashModeButton[a].getMeasuredHeight()
-                    );
-                }
             }
 
 
@@ -1153,7 +1143,7 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         cameraPanel.setVisibility(View.GONE);
         cameraPanel.setAlpha(0.0f);
         container.addView(cameraPanel, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.CENTER | Gravity.BOTTOM));
-        
+
         cameraPanel.setClipChildren(false);
         container.setClipChildren(false);
 
@@ -1414,7 +1404,7 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
             flashModeButton[a] = new ImageView(context);
             flashModeButton[a].setScaleType(ImageView.ScaleType.CENTER);
             flashModeButton[a].setVisibility(View.VISIBLE);
-            cameraPanel.addView(flashModeButton[a], LayoutHelper.createFrame(48, 48, Gravity.LEFT | Gravity.TOP));
+//            cameraPanel.addView(flashModeButton[a], LayoutHelper.createFrame(48, 48, Gravity.LEFT | Gravity.TOP));
             flashModeButton[a].setOnClickListener(currentImage -> {
                 if (flashAnimationInProgress || cameraView == null || !cameraView.isInited() || !cameraOpened) {
                     return;
