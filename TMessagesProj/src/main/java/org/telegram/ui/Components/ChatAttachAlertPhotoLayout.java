@@ -1134,9 +1134,6 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                 super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 
                 measureChild(recordControl, widthMeasureSpec, heightMeasureSpec);
-                for (int a = 0; a < 2; a++) {
-                    measureChild(flashModeButton[a], widthMeasureSpec, heightMeasureSpec);
-                }
             }
         };
 
