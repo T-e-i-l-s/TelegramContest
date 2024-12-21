@@ -23,6 +23,7 @@ import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -689,6 +690,10 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         FrameLayout container = alert.getContainer();
         showAvatarConstructor = parentAlert.avatarPicker != 0;
 
+        if (context instanceof Activity) {
+            ((Activity) context).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
+
         cameraDrawable = context.getResources().getDrawable(R.drawable.instant_camera).mutate();
 
         ActionBarMenu menu = parentAlert.actionBar.createMenu();
@@ -1251,22 +1256,6 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
                             .createErrorBulletin(LocaleController.getString(R.string.GlobalAttachVideoRestricted))
                             .show();
                     return;
-                }
-                if (Build.VERSION.SDK_INT >= 23) {
-                    if (getContext().checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                        requestingPermissions = true;
-                        BaseFragment baseFragment = parentAlert.baseFragment;
-                        if (baseFragment == null) {
-                            baseFragment = LaunchActivity.getLastFragment();
-                        }
-                        if (baseFragment != null && baseFragment.getParentActivity() != null) {
-                            baseFragment.getParentActivity().requestPermissions(
-                                    new String[]{Manifest.permission.RECORD_AUDIO},
-                                    21
-                            );
-                        }
-                        return;
-                    }
                 }
                 tooltipTextView.setVisibility(View.VISIBLE);
                 modeSwitcherView.setVisibility(View.GONE);
@@ -2337,6 +2326,22 @@ public class ChatAttachAlertPhotoLayout extends ChatAttachAlert.AttachAlertLayou
         }
         if (fragment == null || fragment.getParentActivity() == null) {
             return;
+        }
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (getContext().checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                requestingPermissions = true;
+                BaseFragment baseFragment = parentAlert.baseFragment;
+                if (baseFragment == null) {
+                    baseFragment = LaunchActivity.getLastFragment();
+                }
+                if (baseFragment != null && baseFragment.getParentActivity() != null) {
+                    baseFragment.getParentActivity().requestPermissions(
+                            new String[]{Manifest.permission.RECORD_AUDIO},
+                            21
+                    );
+                }
+                return;
+            }
         }
         if (!SharedConfig.inappCamera) {
             deviceHasGoodCamera = false;
